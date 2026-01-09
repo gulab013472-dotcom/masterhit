@@ -1,8 +1,7 @@
 {
-  "name": "render-redirect-server",
+  "name": "conditional-redirect-server",
   "version": "1.0.0",
-  "description": "Render Node.js redirect server with timezone and origin restriction",
-  "main": "server.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js"
   },
