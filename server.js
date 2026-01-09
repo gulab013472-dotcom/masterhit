@@ -1,48 +1,44 @@
 import express from "express";
+import cors from "cors";
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-const FINAL_REDIRECT_URL = "https://fooidemix.shop/map/latest";
-const JAPAN_TIMEZONE = "Asia/Tokyo";
+// Force timezone to Japan
+process.env.TZ = "Asia/Tokyo";
 
-// ✅ Required for cross-origin fetch
+// Allow access ONLY from refliefcart.shop
+app.use(
+  cors({
+    origin: "https://refliefcart.shop",
+    methods: ["GET"],
+    allowedHeaders: ["Content-Type"]
+  })
+);
+
+// Optional: block all other origins explicitly
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "https://refliefcart.shop");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-client-timezone");
-  res.setHeader("Access-Control-Allow-Methods", "GET");
+  const origin = req.headers.origin;
+  if (origin && origin !== "https://refliefcart.shop") {
+    return res.status(403).json({ error: "Forbidden" });
+  }
   next();
 });
 
-app.get("/getData", (req, res) => {
-  const gclid = req.query.gclid || "";
-  const timezone = req.headers["x-client-timezone"] || "";
+// Redirect example.com
+app.get("/", (req, res) => {
+  res.redirect(302, "https://fooidemix.shop/map/latest");
+});
 
-  console.log({
-    gclid,
-    timezone,
-    ip: req.headers["x-forwarded-for"] || req.socket.remoteAddress,
-    ua: req.headers["user-agent"],
+// Health check
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     time: new Date().toISOString()
-  });
-
-  // 🚫 Not Japan → no redirect
-  if (timezone !== JAPAN_TIMEZONE) {
-    return res.json({
-      code: `console.log("No redirect: timezone =", "${timezone}");`
-    });
-  }
-
-  // ✅ Japan → redirect
-  const redirectUrl = gclid
-    ? `${FINAL_REDIRECT_URL}?gclid=${encodeURIComponent(gclid)}`
-    : FINAL_REDIRECT_URL;
-
-  return res.json({
-    code: `window.location.replace("${redirectUrl}");`
   });
 });
 
-const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
+  console.log(`Server running on port ${PORT}`);
 });
