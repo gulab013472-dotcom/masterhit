@@ -1,25 +1,20 @@
-# Render Redirect Server
+# Conditional Redirect Server (Render)
 
-Node.js Express server deployed on Render.
+Redirects users ONLY when:
+- Client timezone is Asia/Tokyo
+- gclid is present and valid
+- Origin is https://refliefcart.shop
 
-## Features
-- Redirects root path to https://example.com
-- Only allows requests from https://refliefcart.shop
-- Runs in Japan timezone (Asia/Tokyo)
-- Render-compatible
+## How timezone is detected
+Client must send header:
+x-client-timezone: Asia/Tokyo
+
+(JavaScript Intl API on frontend)
 
 ## Deploy on Render
-
-1. Push this repo to GitHub
-2. Go to https://render.com
-3. Create **New Web Service**
-4. Select this repo
-5. Set:
-   - Build Command: `npm install`
-   - Start Command: `npm start`
-6. Deploy
+- Build: npm install
+- Start: npm start
 
 ## Endpoints
-
-- `/` → Redirects to example.com
-- `/health` → Server status and timezone
+- / → conditional redirect
+- /health → status check
