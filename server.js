@@ -8,7 +8,7 @@ const JAPAN_TIMEZONE = "Asia/Tokyo";
 // ✅ Required for cross-origin fetch
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "https://refliefcart.shop");
-  res.setHeader("Access-Control-Allow-Headers", "x-client-timezone");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-client-timezone");
   res.setHeader("Access-Control-Allow-Methods", "GET");
   next();
 });
