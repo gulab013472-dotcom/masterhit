@@ -1,12 +1,16 @@
 {
-  "name": "gclid-instant-redirect",
+  "name": "render-redirect-server",
   "version": "1.0.0",
-  "type": "module",
+  "description": "Render Node.js redirect server with timezone and origin restriction",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.19.2"
   }
 }
