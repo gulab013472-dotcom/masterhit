@@ -2,21 +2,19 @@ import express from "express";
 
 const app = express();
 
-// CONFIG
-const SHARED_TOKEN = "refliefcart.shop";
 const FINAL_REDIRECT_URL = "https://example.com";
+
+// ✅ CORS middleware (REQUIRED)
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "https://refliefcart.shop");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-client-timezone");
+  res.setHeader("Access-Control-Allow-Methods", "GET");
+  next();
+});
 
 app.get("/getData", (req, res) => {
   const gclid = req.query.gclid || "";
-  const token = req.query.token || "";
   const timezone = req.headers["x-client-timezone"] || "unknown";
-
-  // 🔐 Token validation (THIS works cross-origin)
-  if (token !== SHARED_TOKEN) {
-    return res.status(403).json({
-      code: `console.warn("Unauthorized request");`
-    });
-  }
 
   console.log({
     gclid,
