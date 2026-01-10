@@ -1,15 +1,12 @@
 {
-  "name": "timezone-gclid-redirect",
+  "name": "masterhit",
   "version": "1.0.0",
-  "description": "Redirect users only if timezone is Japan and gclid is present",
+  "type": "module",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
     "express": "^4.19.2"
-  },
-  "engines": {
-    "node": ">=18"
   }
 }
